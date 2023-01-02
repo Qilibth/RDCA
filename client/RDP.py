@@ -8,6 +8,9 @@ import time
 from os import _exit
 
 class RDP_Main(object):
+    def __init__(self):
+        self.connected = False
+
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
@@ -66,40 +69,19 @@ class RDP_Main(object):
             pass
 
     # gui over
+
     # socket begin
-    def main(self):
-        app = QtWidgets.QApplication(argv)
-        MainWindow = QtWidgets.QMainWindow()
-
-        self.ui = RDP_Main()
-        self.ui.setupUi(MainWindow)
-
-        MainWindow.show()
-
-        self.connected = False
-
-        # everything must be between this line and os._exit()
-        socket_thread = threading.Thread(target=self.socket_start)
-        socket_thread.start()
-
-
-        if app.exec_() == 0:
-            self.send(f"{DISCONNECT}//0")
-            _exit(0)
-
-
     def socket_start(self):
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         while not self.connected:
             try:
                 self.server.connect(ADDR)
-                self.ui.info_panel.setText("Connection Status:\nConnected")
+                self.info_panel.setText("Connection Status:\nConnected")
                 self.connected = True
-                self.send("Test")
                 break
             except ConnectionRefusedError:
-                self.ui.info_panel.setText("Connection Status:\nAttempting...")
+                self.info_panel.setText("Connection Status:\nAttempting...")
 
     def send(self, msg):
         if self.connected:
@@ -112,3 +94,25 @@ class RDP_Main(object):
             self.server.send(msg.encode(FORMAT))
         else:
             pass
+
+def main():
+    with open("client_data.json", "r") as client_data_file:
+        id = json.load(client_data_file)["ID"]
+
+    app = QtWidgets.QApplication(argv)
+    MainWindow = QtWidgets.QMainWindow()
+
+    ui = RDP_Main()
+    ui.setupUi(MainWindow)
+    ui.id_display_label.setText(id)
+
+    MainWindow.show()
+
+    # everything must be between this line and os._exit()
+    socket_thread = threading.Thread(target=ui.socket_start)
+    socket_thread.start()
+
+
+    if app.exec_() == 0:
+        ui.send(f"{DISCONNECT}//0")
+        _exit(0)

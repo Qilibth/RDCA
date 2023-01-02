@@ -1,4 +1,5 @@
 {
 	"HasID" : true,
-	"ID" : null
+	"ID" : null,
+	"ServerIP" : null
 }

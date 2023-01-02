@@ -5,8 +5,8 @@ from servernetworkprotocol import *
 
 class Socket:
     def __init__(self):
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.bind(ADDR)
+        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server.bind(ADDR)
 
         self.server.listen()
         while True:
@@ -31,3 +31,10 @@ class Socket:
                     pass
 
                 print(msg)
+                # command checking
+                if command == DISCONNECT:
+                    print("User Left")
+                    break
+
+
+Socket()

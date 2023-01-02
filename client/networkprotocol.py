@@ -6,3 +6,5 @@ PORT = 5050
 ADDR = (IP, PORT)
 HEADER = 64
 FORMAT = "utf-8"
+
+DISCONNECT = "\\x0"

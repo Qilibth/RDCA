@@ -2,11 +2,12 @@ import socket
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 from sys import argv
-from NProtocol.networkprotocol import *
+from networkprotocol import *
 import threading
-import os
+import time
+from os import _exit
 
-class Ui_MainWindow(object):
+class RDP_Main(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
@@ -57,25 +58,35 @@ class Ui_MainWindow(object):
         self.connect_button.setText(_translate("MainWindow", "Connect"))
 
     def connect(self):
-        print(self.remote_id_entry.text())
+        id_entry = (self.remote_id_entry.text())
+        if id_entry == None or id_entry == "" or " " in id_entry:
+            self.info_panel.setText("Invalid ID")
+        else:
+            # connect with id
+            pass
 
-class RDP_GUI:
-    def __init__(self):
+    # gui over
+    # socket begin
+    def main(self):
         app = QtWidgets.QApplication(argv)
         MainWindow = QtWidgets.QMainWindow()
 
-        self.ui = Ui_MainWindow()
+        self.ui = RDP_Main()
         self.ui.setupUi(MainWindow)
 
         MainWindow.show()
 
-        self.connected = True
+        self.connected = False
 
         # everything must be between this line and os._exit()
+        socket_thread = threading.Thread(target=self.socket_start)
+        socket_thread.start()
 
 
+        if app.exec_() == 0:
+            self.send(f"{DISCONNECT}//0")
+            _exit(0)
 
-        os._exit(app.exec_())
 
     def socket_start(self):
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -83,10 +94,12 @@ class RDP_GUI:
         while not self.connected:
             try:
                 self.server.connect(ADDR)
+                self.ui.info_panel.setText("Connection Status:\nConnected")
+                self.connected = True
                 self.send("Test")
                 break
             except ConnectionRefusedError:
-                pass
+                self.ui.info_panel.setText("Connection Status:\nAttempting...")
 
     def send(self, msg):
         if self.connected:
@@ -95,8 +108,7 @@ class RDP_GUI:
             send_msg_length += b" " * (HEADER - msg_length)
 
             self.server.send(send_msg_length)
+            time.sleep(0.2)
             self.server.send(msg.encode(FORMAT))
         else:
-            return None
-
-rdp = RDP_GUI()
+            pass

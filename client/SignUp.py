@@ -1,8 +1,13 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+from networkprotocol import *
+from sys import argv
+from os import _exit
+import socket
+import time
+import threading
 
-
-class Ui_MainWindow(object):
+class SignUp(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.setEnabled(True)
@@ -48,16 +53,48 @@ class Ui_MainWindow(object):
     def sign_up_clicked(self):
         print(self.id_input.text())
 
-
-class SignUpGUI:
-    @classmethod
-    def run(cls):
-        from sys import argv
-        import os
-
+    # socket begin
+    def main(self):
         app = QtWidgets.QApplication(argv)
         MainWindow = QtWidgets.QMainWindow()
-        ui = Ui_MainWindow()
-        ui.setupUi(MainWindow)
+
+        self.ui = SignUp()
+        self.ui.setupUi(MainWindow)
+
         MainWindow.show()
-        os._exit(app.exec_())
+
+        self.connected = False
+
+        # everything must be between this line and os._exit()
+        socket_thread = threading.Thread(target=self.socket_start)
+        socket_thread.start()
+
+
+        if app.exec_() == 0:
+            self.send(f"{DISCONNECT}//0")
+            _exit(0)
+
+
+    def socket_start(self):
+        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        while not self.connected:
+            try:
+                self.server.connect(ADDR)
+                self.connected = True
+                self.send("Test")
+                break
+            except ConnectionRefusedError:
+                self.ui.info_panel.setText("Connection Status:\nAttempting...")
+
+    def send(self, msg):
+        if self.connected:
+            msg_length = len(msg)
+            send_msg_length = str(msg_length).encode(FORMAT)
+            send_msg_length += b" " * (HEADER - msg_length)
+
+            self.server.send(send_msg_length)
+            time.sleep(0.2)
+            self.server.send(msg.encode(FORMAT))
+        else:
+            pass

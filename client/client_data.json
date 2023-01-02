@@ -1,5 +1,5 @@
 {
 	"HasID" : true,
 	"ID" : null,
-	"ServerIP" : null
+	"ServerIP" : "localhost"
 }

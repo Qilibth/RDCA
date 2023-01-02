@@ -1,4 +1,3 @@
-
 from PyQt5 import QtCore, QtGui, QtWidgets
 from networkprotocol import *
 from sys import argv
@@ -7,14 +6,17 @@ import socket
 import time
 import threading
 
+
 class SignUp(object):
+    def __init__(self):
+        self.connected = False
+
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.setEnabled(True)
-        MainWindow.resize(201, 212)
+        MainWindow.resize(196, 212)
         MainWindow.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         MainWindow.setFixedSize(MainWindow.size())
-
 
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
@@ -51,41 +53,47 @@ class SignUp(object):
         self.label.setText(_translate("MainWindow", "Connection Status :"))
 
     def sign_up_clicked(self):
-        print(self.id_input.text())
+        id_input = self.id_input.text()
+        if id_input == "" or " " in id_input:
+            self.label.setText("Invalid input")
+        elif not self.connected:
+            self.label.setText("Not Connected\nTo Server")
+        else:
+            self.send(f"{SIGNUP}//{id_input}")
+            data = self.recv()
+            self.server_msg_chcecK(data[0], data[1])
 
-    # socket begin
-    def main(self):
-        app = QtWidgets.QApplication(argv)
-        MainWindow = QtWidgets.QMainWindow()
+    def server_msg_chcecK(self, command, value):
+        # msg sent from server checking
+        if command == SIGNUP_RESULT:
+            if eval(value):
+                self.label.setText("ID Set Successfully.\nClose And Reopen\nApplication.")
+                self.sign_up_button.setEnabled(False)
 
-        self.ui = SignUp()
-        self.ui.setupUi(MainWindow)
+                with open("client_data.json", "r") as client_data_file:
+                    data = json.load(client_data_file)
+                    data["HasID"] = True
+                    data["ID"] = self.id_input.text()
 
-        MainWindow.show()
+                with open("client_data.json", "w") as client_data_file:
+                    json.dump(data, client_data_file, indent=4)
+                    print(data)
 
-        self.connected = False
-
-        # everything must be between this line and os._exit()
-        socket_thread = threading.Thread(target=self.socket_start)
-        socket_thread.start()
-
-
-        if app.exec_() == 0:
-            self.send(f"{DISCONNECT}//0")
-            _exit(0)
+            elif not eval(value):
+                self.label.setText("ID Invalid")
+        print(value)
 
 
     def socket_start(self):
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
         while not self.connected:
             try:
                 self.server.connect(ADDR)
+                self.label.setText("Connection Status:\nConnected")
                 self.connected = True
-                self.send("Test")
                 break
             except ConnectionRefusedError:
-                self.ui.info_panel.setText("Connection Status:\nAttempting...")
+                self.label.setText("Connection Status:\nAttempting...")
 
     def send(self, msg):
         if self.connected:
@@ -94,7 +102,41 @@ class SignUp(object):
             send_msg_length += b" " * (HEADER - msg_length)
 
             self.server.send(send_msg_length)
-            time.sleep(0.2)
+            time.sleep(0.2)  # this is required otherwise the sent messages will interfere with each other
             self.server.send(msg.encode(FORMAT))
         else:
             pass
+
+    def recv(self):
+        msg_length = self.server.recv(HEADER).decode(FORMAT)
+
+        if msg_length:
+            msg_length = int(msg_length)
+            msg = self.server.recv(msg_length).decode(FORMAT)
+
+            try:
+                command, value = msg.split("//")
+            except Exception:
+                command, value = None, None
+
+            return (command, value)
+
+
+
+# socket begin
+def main():
+    app = QtWidgets.QApplication(argv)
+    MainWindow = QtWidgets.QMainWindow()
+
+    ui = SignUp()
+    ui.setupUi(MainWindow)
+
+    MainWindow.show()
+
+    # everything must be between this line and os._exit()
+    socket_thread = threading.Thread(target=ui.socket_start)
+    socket_thread.start()
+
+    if app.exec_() == 0:
+        ui.send(f"{DISCONNECT}//0")
+        _exit(0)

@@ -7,4 +7,6 @@ ADDR = (IP, PORT)
 HEADER = 64
 FORMAT = "utf-8"
 
-DISCONNECT = "\\x0"
+DISCONNECT = "/x0"
+SIGNUP = "/x1"
+SIGNUP_RESULT = "/x2"

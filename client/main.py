@@ -2,7 +2,7 @@ import json
 import os
 
 from rdp import RDP_Main
-from signup import SignUp
+import signup
 
 # checking weather the user has an id or not if so then calls functions accordingly
 with open("client_data.json", "r") as client_data_file:
@@ -11,4 +11,5 @@ with open("client_data.json", "r") as client_data_file:
         main = RDP_Main()
         main.main()
     else:
-        SignUp()
+        signup.main()
+

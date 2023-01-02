@@ -10,6 +10,7 @@ from os import _exit
 class RDP_Main(object):
     def __init__(self):
         self.connected = False
+        self.ID = None
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -64,9 +65,10 @@ class RDP_Main(object):
         id_entry = (self.remote_id_entry.text())
         if id_entry == None or id_entry == "" or " " in id_entry:
             self.info_panel.setText("Invalid ID")
+        elif not self.connected:
+            self.info_panel.setText("Not Connected\nTo Server")
         else:
-            # connect with id
-            pass
+            self.send(f"{RDC}//{id_entry}")  # id_entry is the user which this user wants to connect
 
     # gui over
 
@@ -79,6 +81,7 @@ class RDP_Main(object):
                 self.server.connect(ADDR)
                 self.info_panel.setText("Connection Status:\nConnected")
                 self.connected = True
+                self.send(f"{MAKE_ONLINE}//{self.ID}")
                 break
             except ConnectionRefusedError:
                 self.info_panel.setText("Connection Status:\nAttempting...")
@@ -95,6 +98,23 @@ class RDP_Main(object):
         else:
             pass
 
+    def recv(self):
+        msg_length = self.server.recv(HEADER).decode(FORMAT)
+
+        if msg_length:
+            msg_length = int(msg_length)
+            msg = self.server.recv(msg_length).decode(FORMAT)
+
+            try:
+                command, value = msg.split("//")
+            except Exception:
+                command, value = None, None
+
+            return (command, value)
+
+    def server_msg_check(self, command, value):
+        pass
+
 def main():
     with open("client_data.json", "r") as client_data_file:
         id = json.load(client_data_file)["ID"]
@@ -105,6 +125,7 @@ def main():
     ui = RDP_Main()
     ui.setupUi(MainWindow)
     ui.id_display_label.setText(id)
+    ui.ID = id
 
     MainWindow.show()
 
@@ -114,5 +135,6 @@ def main():
 
 
     if app.exec_() == 0:
+        ui.send(f"{MAKE_OFFLINE}//{id}")
         ui.send(f"{DISCONNECT}//0")
         _exit(0)

@@ -53,6 +53,23 @@ class Main:
                     break
                 elif command == SIGNUP:
                     self.send(f"{SIGNUP_RESULT}//{self.sign_up(value, conn)}", conn)
+                elif command == MAKE_ONLINE:
+                    self.make_user_online(value, conn)
+                elif command == MAKE_OFFLINE:
+                    self.make_user_offline(value)
+                elif command == RDC:
+                    eligible_for_rdp = self.check_user_rdp(value)
+
+    def check_user_rdp(self, id):
+        pass
+
+    def make_user_offline(self, id):
+        self.client_connection_list[id]["isOnline"] = False
+        self.client_connection_list[id]["ConnectionObject"] = None
+
+    def make_user_online(self, id, conn):
+        self.client_connection_list[id]["isOnline"] = True
+        self.client_connection_list[id]["ConnectionObject"] = conn
 
     def sign_up(self, id, conn):
         if id in self.client_connection_list:

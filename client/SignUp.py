@@ -61,9 +61,9 @@ class SignUp(object):
         else:
             self.send(f"{SIGNUP}//{id_input}")
             data = self.recv()
-            self.server_msg_chcecK(data[0], data[1])
+            self.server_msg_check(data[0], data[1])
 
-    def server_msg_chcecK(self, command, value):
+    def server_msg_check(self, command, value):
         # msg sent from server checking
         if command == SIGNUP_RESULT:
             if eval(value):

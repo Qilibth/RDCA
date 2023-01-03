@@ -59,9 +59,19 @@ class Main:
                     self.make_user_offline(value)
                 elif command == RDC:
                     eligible_for_rdp = self.check_user_rdp(value)
+                    if eligible_for_rdp:
+                        self.remote_desktop_connection()
+                    elif not eligible_for_rdp:
+                        self.send(f"{RDC}//False")
+
+    def remote_desktop_connection(self, requester_connection_object, requestee_connection_object):
+
 
     def check_user_rdp(self, id):
-        pass
+        for user_id in self.client_connection_list:
+            if id == user_id and self.client_connection_list[id]["isOnline"]:
+                return True
+        return False
 
     def make_user_offline(self, id):
         self.client_connection_list[id]["isOnline"] = False

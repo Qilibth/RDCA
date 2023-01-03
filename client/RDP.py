@@ -69,7 +69,6 @@ class RDP_Main(object):
             self.info_panel.setText("Not Connected\nTo Server")
         else:
             self.send(f"{RDC}//{id_entry}")  # id_entry is the user which this user wants to connect
-
     # gui over
 
     # socket begin
@@ -81,6 +80,10 @@ class RDP_Main(object):
                 self.server.connect(ADDR)
                 self.info_panel.setText("Connection Status:\nConnected")
                 self.connected = True
+
+                recv_thread = threading.Thread(target=self.recv)
+                recv_thread.start()
+
                 self.send(f"{MAKE_ONLINE}//{self.ID}")
                 break
             except ConnectionRefusedError:
@@ -105,12 +108,13 @@ class RDP_Main(object):
             msg_length = int(msg_length)
             msg = self.server.recv(msg_length).decode(FORMAT)
 
+            print(msg)
             try:
                 command, value = msg.split("//")
             except Exception:
                 command, value = None, None
 
-            return (command, value)
+            self.server_msg_check(command, value)
 
     def server_msg_check(self, command, value):
         pass
